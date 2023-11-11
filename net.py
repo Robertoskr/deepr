@@ -9,6 +9,8 @@ class NeuralNetwork:
         self.layers = list(layers)
         self.n_layers = len(self.layers)
         self.is_training = False
+        self.X = None
+        self.X_test = None
 
     def predict(self, X):
         if not self.is_training:
@@ -47,7 +49,8 @@ class NeuralNetwork:
         if epoch_idx == total_epoch_iters:
             end = "\r\n"
 
-        print_str = f"Epoch {epoch + 1}/{self.epochs}, loss: {loss:.4f}"
+        percent_epoch_completed = (epoch_idx + 1) / total_epoch_iters
+        print_str = f"Epoch {epoch + 1}/{self.epochs}, loss: {loss:.4f}, completed: {percent_epoch_completed:.3f}"
         if val_loss is not None:
             print_str += f", val loss: {val_loss}"
 
@@ -63,6 +66,16 @@ class NeuralNetwork:
         if y is not None:
             return X, y.T
         return X
+
+    def _get_batch(self, X, batch_idx, batch_size):
+        l, r = batch_idx * batch_size, (batch_idx + 1) * batch_size
+        n_dims = len(X.shape) - 1
+        if n_dims == 1:
+            return X[:, l:r]
+        elif n_dims == 2:
+            return X[:, :, l:r]
+        elif n_dims == 3:
+            return X[:, :, :, l:r]
 
     def fit(
         self,
@@ -108,20 +121,19 @@ class NeuralNetwork:
         self.y = y
 
         # iterate for every epoch.
-        data_dims, n_samples = X.shape
+        n_samples = X.shape[-1]
         n_batchs_per_epoch = n_samples // batch_size
         if n_samples > n_batchs_per_epoch * batch_size:
             n_batchs_per_epoch += 1
 
         for epoch_idx in range(epochs):
             for batch_idx in range(n_batchs_per_epoch):
-                l, r = batch_idx * batch_size, (batch_idx + 1) * batch_size
-                X_batch = X[:, l:r]  # Selecting all features for the batch samples
-                y_batch = y[:, l:r]
+                X_batch = self._get_batch(X, batch_idx, batch_size)
+                y_batch = self._get_batch(y, batch_idx, batch_size)
 
                 self.optimize(X_batch, y_batch)
                 if self.should_print_progress(epoch_idx):
-                    loss = self.loss(self.X, self.y)
+                    loss = self.loss(X_batch, y_batch)
                     val_loss = None
                     if self.X_test is not None:
                         val_loss = self.loss(self.X_test, self.y_test)

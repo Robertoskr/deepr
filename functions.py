@@ -1,7 +1,8 @@
 import numpy as np
+from .layers.base import Layer
 
 
-class DerivableFunction:
+class DerivableFunction(Layer):
     def __init__(self, *args, **kwargs):
         pass
 
@@ -42,7 +43,21 @@ class L2(RegularizationFunction):
 #
 # -- ACTIVATION FUNCTIONS
 #
-class NoActivation(DerivableFunction):
+class Activation(DerivableFunction, Layer):
+    # These functions are to support the layer functionality, only
+    # usable for activation functions.
+    # Thanks to this, you can do:
+    # NeuralNetwork(Dense(2, 5), Softmax())
+    # insead of:
+    # NeuralNetwork(Dense(2, 5), activation=Softmax())
+    def forward(self, X, *args, **kwargs):
+        return self.base(X)
+
+    def backward(self, prev_grad, *args, **kwargs):
+        return prev_grad * self.derivative(prev_grad)
+
+
+class NoActivation(Activation):
     def base(self, X):
         return X
 
@@ -50,7 +65,7 @@ class NoActivation(DerivableFunction):
         return 1
 
 
-class Relu(DerivableFunction):
+class Relu(Activation):
     def base(self, X):
         X = X.copy()
         X[X < 0] = 0
@@ -63,7 +78,7 @@ class Relu(DerivableFunction):
         return X
 
 
-class Softmax(DerivableFunction):
+class Softmax(Activation):
     def base(self, X):
         # stable softmax implementation
         # Apply along the correct axis and keepdims for proper broadcasting
@@ -76,6 +91,17 @@ class Softmax(DerivableFunction):
         # cross entropy loss function.
         # the 1 will be multiplied by the cross entropy loss function and we will keep it.
         return 1
+
+
+class Sigmoid(Activation):
+    def base(self, X):
+        # Clip X to prevent overflow and underflow in exp(-X)
+        X_clipped = np.clip(X, -500, 500)
+        return 1 / (1 + np.exp(-X_clipped))
+
+    def derivative(self, X):
+        sigmoid = self.base(X)
+        return sigmoid * (1 - sigmoid)
 
 
 #
