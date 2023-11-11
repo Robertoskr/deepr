@@ -21,7 +21,7 @@ Deepr is a deep learning framework created for learning purposes along with the 
 - L2
 
 ## Example usage: 
-```
+```python
 from keras.datasets import mnist 
 import numpy as np 
 from deepr.layers import Convolutional, Dense, Flatten
