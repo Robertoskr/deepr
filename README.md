@@ -7,7 +7,7 @@ Deepr is a deep learning framework created for learning purposes along with the 
 ### Layers: 
 - Fully Connected layer.
 - Dropout layer.
-- Convolutional layer (coming soon)
+- Convolutional layer 
 - Pooling layers (coming soon)
 ### Loss functions: 
 - Mean Squared error.
@@ -15,6 +15,10 @@ Deepr is a deep learning framework created for learning purposes along with the 
 ### Activation functions: 
 - Relu.
 - Softmax.
+- Sigmoid. 
 ### Regularization functions: 
 - L1
 - L2
+
+## Example usage: 
+`something`
