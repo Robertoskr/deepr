@@ -19,7 +19,7 @@ class Dense(Layer):
         regularization_fn=DEFAULT_REGULARIZATION,
     ):
         self.activation = activation_fn
-        self.regularization_fn = regularization_fn 
+        self.regularization_fn = regularization_fn
         self.n_input = n_input
         self.n_output = n_output
 
@@ -45,10 +45,9 @@ class Dense(Layer):
         self.W = self.W - learning_rate * d_w
         self.b = self.b - learning_rate * d_b
 
-    def backward(self, prev_grad, learning_rate):
+    def backward(self, prev_grad, learning_rate, is_first_layer):
         d_a = prev_grad * self.activation.derivative(self.z)
         d_w = np.dot(d_a, self.X.T) + self.regularization_fn.derivative(self.W)
         d_b = np.sum(d_a, axis=1).reshape(self.n_output, 1)
         self._update_weights(d_w, d_b, learning_rate)
         return np.dot(self.W.T, d_a)
-

@@ -30,8 +30,9 @@ class NeuralNetwork:
     def optimize(self, X, y):
         a = self.predict(X)
         grad = self.loss_fn.derivative(a, y)
-        for layer in reversed(self.layers):
-            grad = layer.backward(grad, self.learning_rate)
+        for i, layer in enumerate(reversed(self.layers)):
+            is_first_layer = i == self.n_layers - 1
+            grad = layer.backward(grad, self.learning_rate, is_first_layer)
 
     def should_print_progress(self, epoch):
         print_multiply = self.epochs // self.n_epochs_to_log
