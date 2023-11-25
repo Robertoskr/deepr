@@ -1,41 +1,62 @@
 # deepr
+
 Deep learning framework
 
-Deepr is a deep learning framework created for learning purposes along with the deep learning course in my personal website. 
+Deepr is a deep learning framework created for learning purposes along with the deep learning course in my personal website.
 
-## Supported: 
-### Layers: 
+## Supported:
+
+### Layers:
+
 - Fully Connected layer.
 - Dropout layer.
-- Convolutional layer.  
-- Flatten layer. 
-- Max pooling layer. 
-### Loss functions: 
+- Convolutional layer.
+- Flatten layer.
+- Max pooling layer.
+
+### Loss functions:
+
 - Mean Squared error.
 - Cross entropy.
-### Activation functions: 
+
+### Activation functions:
+
 - Relu.
 - Softmax.
-- Sigmoid. 
-### Regularization functions: 
+- Sigmoid.
+
+### Optimizers:
+
+SGD
+RMSProps (In progress)
+Adam (In progress)
+
+### Regularization functions:
+
 - L1
 - L2
 
-## Example usage: 
+## Example usage:
+
 ```python
-from keras.datasets import mnist 
-import numpy as np 
-from deepr.layers import Convolutional, Dense, Flatten
+from keras.datasets import mnist
+import numpy as np
+from deepr.layers import Convolutional, Dropout, Dense, Flatten, MaxPooling
 from deepr.net import NeuralNetwork
+from deepr.callbacks import ExponentialDecay
 from deepr.functions import MSE, Relu, Softmax, CrossEntropy, Sigmoid
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from deepr.optimizers import SGD
+from sklearn.preprocessing import OneHotEncoder
 
 data = mnist.load_data()
-(X_train, y_train), (X_test, y_test) = data 
+(X_train, y_train), (X_test, y_test) = data
 X_train = X_train.reshape(-1, 1, 28, 28)
 X_test = X_test.reshape(-1, 1, 28, 28)
 y_train = y_train.reshape(-1, 1)
 y_test = y_test.reshape(-1, 1)
+
+X_train = X_train / 255.0
+X_test = X_test / 255.0
 
 encoder = OneHotEncoder()
 y_train = encoder.fit_transform(y_train)
@@ -45,25 +66,27 @@ y_train = y_train.toarray()
 y_test = y_test.toarray()
 
 net = NeuralNetwork(
-    Convolutional((1, 28, 28), 6, 3), 
-    # You can do it like this 
-    Sigmoid(), 
-    Flatten(), 
-    # Or you can define the activation function here. 
-    Dense(3 * 23 * 23, 10, Softmax()), 
+    Convolutional((1, 28, 28), 4, 1, random_kernels=True),
+    # You can do it like this
+    Sigmoid(),
+    MaxPooling(2, stride=2),
+    Flatten(),
+    # Or you can define the activation function here.
+    Dense(1 * ((23 // 2) + 1) ** 2, 10, Softmax())
 )
 
+optimizer = SGD(learning_rate=0.001)
+
 net.fit(
-    X_train[0:1000], 
-    y_train[0:1000], 
-    learning_rate=0.0005, 
-    batch_size=72, 
-    epochs=250, 
-    n_epochs_to_log=100,
+    X_train,
+    y_train,
+    optimizer=optimizer,
+    batch_size=72,
+    epochs=10,
     loss=CrossEntropy()
 )
 
-def predict(index): 
+def predict(index):
     image, target = X_train[index:index+1], y_train[index]
 
     pred = net.predict(image)[0]
