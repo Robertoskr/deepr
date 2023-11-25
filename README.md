@@ -7,8 +7,9 @@ Deepr is a deep learning framework created for learning purposes along with the 
 ### Layers: 
 - Fully Connected layer.
 - Dropout layer.
-- Convolutional layer 
-- Pooling layers (coming soon)
+- Convolutional layer.  
+- Flatten layer. 
+- Max pooling layer. 
 ### Loss functions: 
 - Mean Squared error.
 - Cross entropy.

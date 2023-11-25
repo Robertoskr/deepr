@@ -26,12 +26,18 @@ class Convolutional(Layer):
         self.output_shape = (self.depth, self.output_height, self.output_width)
 
         self.kernels_shape = (self.depth, input_depth, kernel_size, kernel_size)
-        self.kernels = (
-            np.random.randn(*self.kernels_shape)
-            if random_kernels
-            else np.zeros(self.kernels_shape)
-        )
-        self.biases = np.random.randn(1, self.depth)
+        if random_kernels:
+            self.kernels = np.random.random(self.kernels_shape)
+        else:
+            self.kernels = np.zeros(self.kernels_shape)
+
+        self.biases = np.zeros((1, self.depth)) + 1
+
+        self.d_kernels = None
+        self.d_biases = None
+
+        self.params = ["kernels", "biases"]
+        self.grads = ["d_kernels", "d_biases"]
 
     def _forward_stride(self):
         """
@@ -97,7 +103,7 @@ class Convolutional(Layer):
             X = X[:, :, self.padding : -self.padding, self.padding : -self.padding]
         return X
 
-    def _backward_stride(self, d_out, learning_rate, is_first_layer):
+    def _backward_stride(self, d_out, is_first_layer):
         n = len(self.X)
 
         # Initialize gradients
@@ -120,8 +126,8 @@ class Convolutional(Layer):
                         d_biases[0, d] += d_out[image, d, h, w]
 
         # Update the kernels and the biases
-        self.kernels -= learning_rate * d_filters
-        self.biases -= learning_rate * d_biases
+        self.d_kernels = d_filters
+        self.d_biases = d_biases
 
         if is_first_layer:
             return
@@ -152,14 +158,14 @@ class Convolutional(Layer):
         d_X = self._remove_padding(d_X)
         return d_X.T
 
-    def backward(self, d_out, learning_rate, is_first_layer):
+    def backward(self, d_out, is_first_layer):
         # d_out is the gradient of the loss with respect to the output of this layer
         # The shape of d_out would be the same as self.output
         n = len(self.X)
         d_out = d_out.T  # Transpose back to the shape used in forward pass
 
         if self.stride > 1:
-            return self._backward_stride(d_out, learning_rate, is_first_layer)
+            return self._backward_stride(d_out, is_first_layer)
 
         d_filters = np.zeros_like(self.kernels)
         d_biases = np.zeros_like(self.biases)
@@ -183,8 +189,8 @@ class Convolutional(Layer):
                 d_biases[0, d] += np.sum(d_out[image, d])
 
         # Update the kernels and the biases
-        self.kernels = self.kernels - learning_rate * d_filters
-        self.biases = self.biases - learning_rate * d_biases
+        self.d_kernels = d_filters
+        self.d_biases = d_biases
 
         if is_first_layer:
             # Early exit, there is nothing more to optimize

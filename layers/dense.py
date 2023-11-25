@@ -28,7 +28,9 @@ class Dense(Layer):
 
         # output from the layer (before the activation)
         self.z = None
-        # output from the layer (after the activation)
+        self.d_W, self.d_b = None, None
+        self.params = ["W", "b"]
+        self.grads = ["d_W", "d_b"]
 
     def _assert_shape_forward(self, X):
         d, n = X.shape
@@ -41,13 +43,8 @@ class Dense(Layer):
         self.a = self.activation.base(self.z)
         return self.a
 
-    def _update_weights(self, d_w, d_b, learning_rate):
-        self.W = self.W - learning_rate * d_w
-        self.b = self.b - learning_rate * d_b
-
-    def backward(self, prev_grad, learning_rate, is_first_layer):
+    def backward(self, prev_grad, is_first_layer):
         d_a = prev_grad * self.activation.derivative(self.z)
-        d_w = np.dot(d_a, self.X.T) + self.regularization_fn.derivative(self.W)
-        d_b = np.sum(d_a, axis=1).reshape(self.n_output, 1)
-        self._update_weights(d_w, d_b, learning_rate)
+        self.d_W = np.dot(d_a, self.X.T) + self.regularization_fn.derivative(self.W)
+        self.d_b = np.sum(d_a, axis=1).reshape(self.n_output, 1)
         return np.dot(self.W.T, d_a)

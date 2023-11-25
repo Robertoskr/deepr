@@ -2,6 +2,7 @@
 Base Neural network class. 
 A neural network is a combination of layers. Which work together to learn and make predictions. 
 """
+from .optimizers import SGD
 
 
 class NeuralNetwork:
@@ -11,6 +12,20 @@ class NeuralNetwork:
         self.is_training = False
         self.X = None
         self.X_test = None
+
+    def get_layer_params(self, param_key):
+        for layer in self.layers:
+            if hasattr(layer, param_key):
+                for layer_param_key_value in getattr(layer, param_key):
+                    yield getattr(layer, layer_param_key_value)
+
+    @property
+    def params(self):
+        yield from self.get_layer_params("params")
+
+    @property
+    def grads(self):
+        yield from self.get_layer_params("grads")
 
     def predict(self, X):
         if not self.is_training:
@@ -27,12 +42,16 @@ class NeuralNetwork:
     def set_training_status(self, is_training: bool):
         self.is_training = is_training
 
-    def optimize(self, X, y):
+    def backward(self, X, y):
         a = self.predict(X)
         grad = self.loss_fn.derivative(a, y)
         for i, layer in enumerate(reversed(self.layers)):
             is_first_layer = i == self.n_layers - 1
-            grad = layer.backward(grad, self.learning_rate, is_first_layer)
+            grad = layer.backward(grad, is_first_layer)
+
+    def optimize(self, X, y):
+        self.backward(X, y)
+        self.optimizer.step(self.params, self.grads)
 
     def should_print_progress(self, epoch):
         print_multiply = self.epochs // self.n_epochs_to_log
@@ -52,6 +71,7 @@ class NeuralNetwork:
 
         percent_epoch_completed = (epoch_idx + 1) / total_epoch_iters
         print_str = f"Epoch {epoch + 1}/{self.epochs}, loss: {loss:.4f}, completed: {percent_epoch_completed:.3f}"
+        print_str += f", learning rate: {self.optimizer.learning_rate}"
         if val_loss is not None:
             print_str += f", val loss: {val_loss}"
 
@@ -78,6 +98,11 @@ class NeuralNetwork:
         elif n_dims == 3:
             return X[:, :, :, l:r]
 
+    def _update_loss(self, loss, running_loss, epoch_idx):
+        running_loss += loss
+        epoch_loss = running_loss / (epoch_idx + 1)
+        return running_loss, epoch_loss
+
     def fit(
         self,
         X,
@@ -86,9 +111,10 @@ class NeuralNetwork:
         y_test=None,
         batch_size=36,
         epochs=10,
-        learning_rate=0.001,
+        optimizer=SGD(learning_rate=0.001),
         shuffle: bool = False,
-        n_epochs_to_log=10,
+        n_epochs_to_log=None,
+        callbacks: list | None = None,
         loss=None,
     ):
         # first thing transpose X. We work with columns as indivisual entries.
@@ -101,13 +127,16 @@ class NeuralNetwork:
         if shuffle:
             pass
 
-        self.learning_rate = learning_rate
+        if n_epochs_to_log is None:
+            n_epochs_to_log = epochs
         self.n_epochs_to_log = n_epochs_to_log
         self.loss_fn = loss
         self.epochs = epochs
+        self.callbacks = callbacks or []
+        self.optimizer = optimizer
 
         self.set_training_status(True)
-        self._fit(X_transposed, y_transposed, batch_size, epochs, learning_rate)
+        self._fit(X_transposed, y_transposed, batch_size)
         self.set_training_status(False)
 
     def _fit(
@@ -115,8 +144,6 @@ class NeuralNetwork:
         X,
         y,
         batch_size=36,
-        epochs=10,
-        learning_rate=0.001,
     ):
         self.X = X
         self.y = y
@@ -127,21 +154,36 @@ class NeuralNetwork:
         if n_samples > n_batchs_per_epoch * batch_size:
             n_batchs_per_epoch += 1
 
-        for epoch_idx in range(epochs):
+        for epoch_idx in range(self.epochs):
+            running_loss = 0.0
+            running_val_loss = 0.0
+            epoch_loss = 0.0
+            epoch_val_loss = 0.0
+
+            should_print_progress = self.should_print_progress(epoch_idx)
+
             for batch_idx in range(n_batchs_per_epoch):
                 X_batch = self._get_batch(X, batch_idx, batch_size)
                 y_batch = self._get_batch(y, batch_idx, batch_size)
 
                 self.optimize(X_batch, y_batch)
-                if self.should_print_progress(epoch_idx):
-                    loss = self.loss(X_batch, y_batch)
-                    val_loss = None
-                    if self.X_test is not None:
-                        val_loss = self.loss(self.X_test, self.y_test)
+                loss = self.loss(X_batch, y_batch)
+                running_loss, epoch_loss = self._update_loss(
+                    loss, running_loss, batch_idx
+                )
+                if self.X_test is not None:
+                    val_loss = self.loss(self.X_test, self.y_test)
+                    running_val_loss, epoch_val_loss = self._update_loss(
+                        val_loss, running_val_loss, batch_idx
+                    )
+
+                if should_print_progress:
                     self.print_progress(
                         epoch_idx,
                         batch_idx,
                         n_batchs_per_epoch - 1,
-                        loss,
-                        val_loss=val_loss,
+                        epoch_loss,
+                        val_loss=epoch_val_loss,
                     )
+            for callback in self.callbacks:
+                callback.on_epoch_end(self, epoch_idx, epoch_loss, epoch_val_loss)
