@@ -1,1 +1,1 @@
-from .base import Optimizer, SGD
+from .sgd import SGD

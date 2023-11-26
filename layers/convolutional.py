@@ -122,12 +122,12 @@ class Convolutional(Layer):
                         w_end = w_start + self.kernel_size
 
                         region = self.X[image, :, h_start:h_end, w_start:w_end]
-                        d_filters[d, :, :, :] += region * d_out[image, d, h, w]
+                        d_filters[d, :, :, :] += region * d_out[image, d, h, w] / n
                         d_biases[0, d] += d_out[image, d, h, w]
 
         # Update the kernels and the biases
-        self.d_kernels = d_filters
-        self.d_biases = d_biases
+        self.d_kernels = -d_filters
+        self.d_biases = -d_biases
 
         if is_first_layer:
             return
@@ -176,8 +176,11 @@ class Convolutional(Layer):
                     image_channel = self.X[image, j, :, :]
                     kernel_output_d = d_out[image, d]
 
-                    d_filters[d, j] += sc.signal.correlate2d(
-                        image_channel, kernel_output_d, mode="valid"
+                    d_filters[d, j] += (
+                        sc.signal.correlate2d(
+                            image_channel, kernel_output_d, mode="valid"
+                        )
+                        / n
                     )
 
         # Initialize gradient for biases
@@ -189,8 +192,8 @@ class Convolutional(Layer):
                 d_biases[0, d] += np.sum(d_out[image, d])
 
         # Update the kernels and the biases
-        self.d_kernels = d_filters
-        self.d_biases = d_biases
+        self.d_kernels = -d_filters
+        self.d_biases = -d_biases
 
         if is_first_layer:
             # Early exit, there is nothing more to optimize

@@ -12,8 +12,3 @@ class Optimizer:
 
     def update_fn(self, grad, param):
         raise NotImplementedError
-
-
-class SGD(Optimizer):
-    def update_fn(self, grad, param):
-        param -= self.learning_rate * grad

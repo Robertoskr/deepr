@@ -27,9 +27,10 @@ Deepr is a deep learning framework created for learning purposes along with the 
 
 ### Optimizers:
 
-SGD
-RMSProps (In progress)
-Adam (In progress)
+- SGD
+- SGDM (SGD with momentum.)
+- RMSProps (In progress)
+- Adam (In progress)
 
 ### Regularization functions:
 

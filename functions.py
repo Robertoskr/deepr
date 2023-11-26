@@ -72,10 +72,7 @@ class Relu(Activation):
         return X
 
     def derivative(self, X):
-        X_hat = X.copy()
-        X_hat[X <= 0] = 0
-        X_hat[X > 0] = 1
-        return X_hat
+        return np.where(X <= 0, 0, 1)
 
 
 class Softmax(Activation):
