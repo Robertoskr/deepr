@@ -67,12 +67,10 @@ class NoActivation(Activation):
 
 class Relu(Activation):
     def base(self, X):
-        X = X.copy()
-        X[X < 0] = 0
-        return X
+        return np.maximum(0, X)
 
     def derivative(self, X):
-        return np.where(X <= 0, 0, 1)
+        return np.where(X > 0, 1, 0)
 
 
 class Softmax(Activation):

@@ -2,7 +2,13 @@
 
 Deep learning framework
 
-Deepr is a deep learning framework created for learning purposes along with the deep learning course in my personal website.
+Deepr is a deep learning framework created from scratch using Numpy and Scipy libraries.
+
+It's not meant for production purposes since its very slow comparing it with other frameworks such as
+tensorflow or pytorch.
+
+It was created for learning purposes, because if you really want to understand how things are done, and how they work
+the best way is to implement them yourself.
 
 ## Supported:
 
@@ -29,8 +35,8 @@ Deepr is a deep learning framework created for learning purposes along with the 
 
 - SGD
 - SGDM (SGD with momentum.)
-- RMSProps (In progress)
-- Adam (In progress)
+- RMSProp
+- Adam
 
 ### Regularization functions:
 
@@ -46,7 +52,7 @@ from deepr.layers import Convolutional, Dropout, Dense, Flatten, MaxPooling
 from deepr.net import NeuralNetwork
 from deepr.callbacks import ExponentialDecay
 from deepr.functions import MSE, Relu, Softmax, CrossEntropy, Sigmoid
-from deepr.optimizers import SGD
+from deepr.optimizers import Adam
 from sklearn.preprocessing import OneHotEncoder
 
 data = mnist.load_data()
@@ -76,7 +82,7 @@ net = NeuralNetwork(
     Dense(1 * ((23 // 2) + 1) ** 2, 10, Softmax())
 )
 
-optimizer = SGD(learning_rate=0.001)
+optimizer = Adam(learning_rate=0.001)
 
 net.fit(
     X_train,

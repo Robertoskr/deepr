@@ -49,6 +49,9 @@ class NeuralNetwork:
             is_first_layer = i == self.n_layers - 1
             grad = layer.backward(grad, is_first_layer)
 
+    def on_epoch_begin(self, epoch_idx):
+        self.optimizer.update_epoch(epoch_idx + 1)
+
     def optimize(self, X, y):
         self.backward(X, y)
         self.optimizer.step(self.params, self.grads)
@@ -98,10 +101,9 @@ class NeuralNetwork:
         elif n_dims == 3:
             return X[:, :, :, l:r]
 
-    def _update_loss(self, loss, running_loss, epoch_idx):
-        running_loss += loss
-        epoch_loss = running_loss / (epoch_idx + 1)
-        return running_loss, epoch_loss
+    def _update_loss(self, loss, current_loss):
+        decay_rate = 0.5
+        return (1 - decay_rate) * loss + decay_rate * current_loss
 
     def fit(
         self,
@@ -162,28 +164,25 @@ class NeuralNetwork:
 
             should_print_progress = self.should_print_progress(epoch_idx)
 
+            self.on_epoch_begin(epoch_idx)
             for batch_idx in range(n_batchs_per_epoch):
                 X_batch = self._get_batch(X, batch_idx, batch_size)
                 y_batch = self._get_batch(y, batch_idx, batch_size)
 
                 self.optimize(X_batch, y_batch)
                 loss = self.loss(X_batch, y_batch)
-                running_loss, epoch_loss = self._update_loss(
-                    loss, running_loss, batch_idx
-                )
+                running_loss = self._update_loss(running_loss, loss)
                 if self.X_test is not None:
                     val_loss = self.loss(self.X_test, self.y_test)
-                    running_val_loss, epoch_val_loss = self._update_loss(
-                        val_loss, running_val_loss, batch_idx
-                    )
+                    running_val_loss = self._update_loss(running_val_loss, val_loss)
 
                 if should_print_progress:
                     self.print_progress(
                         epoch_idx,
                         batch_idx,
                         n_batchs_per_epoch - 1,
-                        epoch_loss,
-                        val_loss=epoch_val_loss,
+                        running_loss,
+                        val_loss=running_val_loss,
                     )
             for callback in self.callbacks:
                 callback.on_epoch_end(self, epoch_idx, epoch_loss, epoch_val_loss)
