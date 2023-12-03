@@ -73,6 +73,18 @@ class Relu(Activation):
         return np.where(X > 0, 1, 0)
 
 
+class LeakyRelu(Activation):
+    def __init__(self, alpha=0.01, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.alpha = alpha
+
+    def base(self, X):
+        return np.maximum(self.alpha * X, X)
+
+    def derivative(self, X):
+        return np.where(X > 0, 1, self.alpha)
+
+
 class Softmax(Activation):
     def base(self, X):
         # stable softmax implementation

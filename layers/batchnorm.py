@@ -26,7 +26,19 @@ class BatchNormalization(Layer):
         )
         return var.reshape(shape)
 
-    def forward(self, X, *args, **kwargs):
+    def set_mean_and_var(self, mean, var):
+        """
+        Sets the mean and variance for the batch normalization layer.
+        It uses exponential decay instead of a moving average for simplicity.
+        """
+        if self.mean is None:
+            self.mean, self.var = mean, var
+            return
+        decay_rate = 0.9
+        self.mean = decay_rate * self.mean + (1 - decay_rate) * mean
+        self.var = decay_rate * self.var + (1 - decay_rate) * var
+
+    def forward(self, X, is_training, *args, **kwargs):
         if self.g is None:
             dims = get_data_dimensions(X)
             self.g = np.ones(dims)
@@ -36,8 +48,10 @@ class BatchNormalization(Layer):
 
         axis = tuple((i for i in range(len(X.shape)) if i != get_dimension_index(X)))
 
-        self.mean = self.reshape_for_operations(np.mean(self.X, axis=axis))
-        self.var = self.reshape_for_operations(np.var(self.X, axis=axis))
+        if is_training:
+            mean = self.reshape_for_operations(np.mean(self.X, axis=axis))
+            var = self.reshape_for_operations(np.var(self.X, axis=axis))
+            self.set_mean_and_var(mean, var)
 
         X_norm = (self.X - self.mean) / np.sqrt(self.var + 1e-8)
         return X_norm * self.reshape_for_operations(

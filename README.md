@@ -29,6 +29,7 @@ the best way is to implement them yourself.
 ### Activation functions:
 
 - Relu.
+- Leaky Relu.
 - Softmax.
 - Sigmoid.
 
