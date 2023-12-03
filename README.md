@@ -19,6 +19,7 @@ the best way is to implement them yourself.
 - Convolutional layer.
 - Flatten layer.
 - Max pooling layer.
+- Batch normalization layer.
 
 ### Loss functions:
 
