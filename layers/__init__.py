@@ -4,3 +4,5 @@ from .convolutional import Convolutional
 from .maxpooling import MaxPooling
 from .flatten import Flatten
 from .batchnorm import BatchNormalization
+from .rnn import RNN
+from .lstm import LSTM

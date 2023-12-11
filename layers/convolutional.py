@@ -90,11 +90,8 @@ class Convolutional(Layer):
                     image_channel = self.X[image, j, :, :]
                     kernel_output_d = d_out[image, d]
 
-                    d_filters[d, j] += (
-                        sc.signal.correlate2d(
-                            image_channel, kernel_output_d, mode="valid"
-                        )
-                        / n
+                    d_filters[d, j] += sc.signal.correlate2d(
+                        image_channel, kernel_output_d, mode="valid"
                     )
 
         # Initialize gradient for biases
@@ -124,11 +121,8 @@ class Convolutional(Layer):
                     kernel_output_d = d_out[image, d]
 
                     # Apply convolution using correlate2d
-                    d_X[image, j] += (
-                        sc.signal.correlate2d(
-                            kernel_output_d, rotated_kernel[j], mode="full"
-                        )
-                        / n
+                    d_X[image, j] += sc.signal.correlate2d(
+                        kernel_output_d, rotated_kernel[j], mode="full"
                     )
 
         d_X = self._remove_padding(d_X)

@@ -111,6 +111,14 @@ class Sigmoid(Activation):
         return sigmoid * (1 - sigmoid)
 
 
+class Tanh(Activation):
+    def base(self, X):
+        return np.tanh(X)
+
+    def derivative(self, X):
+        return 1 - np.tanh(X) ** 2
+
+
 #
 # -- LOSS FUNCTIONS
 #
@@ -120,7 +128,7 @@ class MSE(DerivableFunction):
 
     def derivative(self, a, y):
         # output is d * n
-        return (2 * (a - y)) / a.shape[1]
+        return -1 * ((2 * (a - y)) / a.shape[1])
 
 
 class CrossEntropy(DerivableFunction):

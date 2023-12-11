@@ -72,7 +72,7 @@ class NeuralNetwork:
         if epoch_idx == total_epoch_iters:
             end = "\r\n"
 
-        percent_epoch_completed = (epoch_idx + 1) / total_epoch_iters
+        percent_epoch_completed = (epoch_idx + 1) / (total_epoch_iters + 1)
         print_str = f"Epoch {epoch + 1}/{self.epochs}, loss: {loss:.4f}, completed: {percent_epoch_completed:.3f}"
         print_str += f", learning rate: {self.optimizer.learning_rate}"
         if val_loss is not None:
@@ -152,6 +152,7 @@ class NeuralNetwork:
 
         # iterate for every epoch.
         n_samples = X.shape[-1]
+        batch_size = min(batch_size, n_samples)
         n_batchs_per_epoch = n_samples // batch_size
         if n_samples > n_batchs_per_epoch * batch_size:
             n_batchs_per_epoch += 1

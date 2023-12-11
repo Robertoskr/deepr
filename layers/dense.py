@@ -15,10 +15,8 @@ class Dense(Layer):
         self,
         n_input: int,
         n_output: int,
-        activation_fn=NoActivation(),
         regularization_fn=DEFAULT_REGULARIZATION,
     ):
-        self.activation = activation_fn
         self.regularization_fn = regularization_fn
         self.n_input = n_input
         self.n_output = n_output
@@ -40,11 +38,10 @@ class Dense(Layer):
         self.X = X
         self._assert_shape_forward(X)
         self.z = np.dot(self.W, X) + self.b
-        self.a = self.activation.base(self.z)
-        return self.a
+        return self.z
 
     def backward(self, prev_grad, is_first_layer):
-        d_a = prev_grad * self.activation.derivative(self.z)
+        d_a = prev_grad
         self.d_W = np.dot(d_a, self.X.T) + self.regularization_fn.derivative(self.W)
         self.d_b = np.sum(d_a, axis=1).reshape(self.n_output, 1)
         return np.dot(self.W.T, d_a)

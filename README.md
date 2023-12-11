@@ -20,6 +20,8 @@ the best way is to implement them yourself.
 - Flatten layer.
 - Max pooling layer.
 - Batch normalization layer.
+- RNN layer. (Simple rnn) (Only supported for the first layer)
+- LSTM layer.
 
 ### Loss functions:
 
@@ -32,6 +34,7 @@ the best way is to implement them yourself.
 - Leaky Relu.
 - Softmax.
 - Sigmoid.
+- Tanh
 
 ### Optimizers:
 
